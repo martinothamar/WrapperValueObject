@@ -5,6 +5,7 @@ namespace WrapperValueObject.TestConsole
     [WrapperValueObject(typeof(float))]
     public readonly partial struct SomeValue
     {
+        public override string ToString() => m_value.ToString();
     }
 
     public static class Program

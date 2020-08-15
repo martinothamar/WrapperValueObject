@@ -61,6 +61,8 @@ namespace WrapperValueObject.Generator
         {
             var isReadOnly = node.Modifiers.Any(m => m.IsKind(SyntaxKind.ReadOnlyKeyword));
 
+            // TODO - options for methods to generate, don't generate methods where the user has already supplied them (i.e. custom ToString)
+
             sourceBuilder.AppendLine(@$"
 using System;
 using System.Runtime.CompilerServices;
@@ -110,10 +112,7 @@ namespace {type.ContainingNamespace}
         public override int GetHashCode() => m_value.GetHashCode();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals({type.Name} obj)
-        {{
-            return m_value.Equals(obj.m_value);
-        }}
+        public bool Equals({type.Name} obj) => m_value.Equals(obj.m_value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CompareTo(object? value) => m_value.CompareTo(value);
