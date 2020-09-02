@@ -3,15 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30323.103
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WrapperValueObject", "src\WrapperValueObject\WrapperValueObject.csproj", "{1E6E18A3-5F33-4D3F-9A6E-F88299282411}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WrapperValueObject.Generator", "src\WrapperValueObject.Generator\WrapperValueObject.Generator.csproj", "{D3A17935-A472-440E-B27D-49E1A6852E84}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B759AFAF-FD91-4FE8-8AA0-420AC3CDDA39}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{33A199CD-5FCA-40DA-8D04-D3510EB7F648}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WrapperValueObject.TestConsole", "test\WrapperValueObject.TestConsole\WrapperValueObject.TestConsole.csproj", "{DE9DA748-672E-4B91-9158-B73EAA7F5CD9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WrapperValueObject.TestConsole", "test\WrapperValueObject.TestConsole\WrapperValueObject.TestConsole.csproj", "{DE9DA748-672E-4B91-9158-B73EAA7F5CD9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,10 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{1E6E18A3-5F33-4D3F-9A6E-F88299282411}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1E6E18A3-5F33-4D3F-9A6E-F88299282411}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1E6E18A3-5F33-4D3F-9A6E-F88299282411}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1E6E18A3-5F33-4D3F-9A6E-F88299282411}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D3A17935-A472-440E-B27D-49E1A6852E84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D3A17935-A472-440E-B27D-49E1A6852E84}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3A17935-A472-440E-B27D-49E1A6852E84}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -36,7 +30,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{1E6E18A3-5F33-4D3F-9A6E-F88299282411} = {B759AFAF-FD91-4FE8-8AA0-420AC3CDDA39}
 		{D3A17935-A472-440E-B27D-49E1A6852E84} = {B759AFAF-FD91-4FE8-8AA0-420AC3CDDA39}
 		{DE9DA748-672E-4B91-9158-B73EAA7F5CD9} = {33A199CD-5FCA-40DA-8D04-D3510EB7F648}
 	EndGlobalSection
