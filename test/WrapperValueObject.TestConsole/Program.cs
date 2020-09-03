@@ -1,41 +1,54 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace WrapperValueObject.TestConsole
 {
-    [WrapperValueObject(typeof(float))]
-    public readonly partial struct SomeValue
+    [WrapperValueObject(typeof(Guid))]
+    public readonly partial struct MatchId
     {
-        public override string ToString() => _value.ToString("0.0");
+        public static MatchId New() => Guid.NewGuid();
     }
 
-    [WrapperValueObject(typeof(float), typeof(float))]
-    public readonly partial struct SomeCompoundValue
+    [WrapperValueObject("HomeGoals", typeof(byte), "AwayGoals", typeof(byte))]
+    public readonly partial struct MatchResult
     {
+    }
+
+    public partial struct Match
+    {
+        public readonly MatchId MatchId { get; }
+
+        public MatchResult Result { get; private set; }
+
+        public void SetResult(MatchResult result) => Result = result;
+
+        public Match(in MatchId matchId)
+        {
+            MatchId = matchId;
+            Result = default;
+        }
     }
 
     public static class Program
     {
-        public static string ToString(this in SomeValue value, string? format) => "asdsa";
-
-        static void Main(string[] args)
+        static void Main()
         {
-            SomeValue value1 = 1f;
-            SomeValue value2 = 2f;
+            var match = new Match(MatchId.New());
 
-            Console.WriteLine($"value1: {value1}, value2: {value2}");
-            Console.WriteLine($"Equals: {value1.Equals(value2)}");
-            Console.WriteLine($"value1 + value2 = {value1 + value2}");
-            Console.WriteLine($"ToString(): {value1.ToString()}");
-            Console.WriteLine($"ToString(format): {value1.ToString("0.00")}");
+            match.SetResult((1, 2));
+            match.SetResult(new MatchResult(1, 2));
 
-            Console.WriteLine();
+            var otherResult = new MatchResult(2, 1);
 
-            var value3 = new SomeCompoundValue(1f, 2f);
-            var value4 = new SomeCompoundValue(1f, 2f);
+            Debug.Assert(otherResult != match.Result);
 
-            Console.WriteLine($"value3: {value3}, value4: {value4}");
-            Console.WriteLine($"Equals: {value3.Equals(value4)}");
-            Console.WriteLine($"ToString(): {value3}");
+            match.SetResult((2, 1));
+            Debug.Assert(otherResult == match.Result);
+
+            Debug.Assert(match.MatchId != default);
+            Debug.Assert(match.Result != default);
+            Debug.Assert(match.Result.HomeGoals == 2);
+            Debug.Assert(match.Result.AwayGoals == 1);
         }
     }
 }

@@ -46,20 +46,39 @@ namespace WrapperValueObject.Generator
                     if (attribute is null)
                         continue;
 
-                    var wrapperTypes = attribute.ArgumentList!.Arguments
-                        .Select(a => semanticModel.GetSymbolInfo(((TypeOfExpressionSyntax)a.Expression).Type).Symbol)
-                        .Cast<INamedTypeSymbol>()
-                        .ToArray();
-
-                    if (wrapperTypes.Count() == 1)
+                    if (attribute.ArgumentList!.Arguments.Count == 1)
                     {
-                        var wrapperType = wrapperTypes.Single();
+                        var wrapperType = (INamedTypeSymbol)semanticModel
+                            .GetSymbolInfo(((TypeOfExpressionSyntax)attribute.ArgumentList!.Arguments[0].Expression).Type).Symbol!;
 
                         var csharpType = GenerateWrapper(context, sourceBuilder, node, type!, $"{wrapperType!.ContainingNamespace}.{wrapperType.Name}");
                     }
                     else
                     {
-                        GenerateWrapper(context, sourceBuilder, node, type!, wrapperTypes);
+
+                        List<(string Name, INamedTypeSymbol Type)> innerTypes = new();
+
+                        var currentName = "Value";
+
+                        foreach (var a in attribute.ArgumentList.Arguments)
+                        {
+                            var expression = a.Expression;
+
+                            if (expression is TypeOfExpressionSyntax typeOfExpression)
+                            {
+                                // Single type
+                                var typeSymbol = semanticModel.GetSymbolInfo(typeOfExpression.Type).Symbol;
+                                innerTypes.Add((currentName, (INamedTypeSymbol)typeSymbol!));
+                                currentName = "Value";
+                            }
+                            else
+                            {
+                                // Value tuple config
+                                currentName = (string)semanticModel.GetConstantValue(expression).Value;
+                            }
+                        }
+
+                        GenerateWrapper(context, sourceBuilder, node, type!, innerTypes);
                     }
 
                     sourceBuilder.Clear();
@@ -77,11 +96,28 @@ namespace WrapperValueObject
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
     public class WrapperValueObjectAttribute : Attribute
     {
-        private readonly Type[] _types;
+        private readonly (string Name, Type Type)[] _types;
 
-        public WrapperValueObjectAttribute(params Type[] types)
+        public WrapperValueObjectAttribute(Type type)
         {
-            _types = types;
+            _types = new (string Name, Type Type)[] { (""Value"", type) };
+        }
+
+        public WrapperValueObjectAttribute(string name1, Type type1)
+        {
+            _types = new (string Name, Type Type)[] 
+		    { 
+			    (name1, type1),
+		    };
+        }
+
+        public WrapperValueObjectAttribute(string name1, Type type1, string name2, Type type2)
+        {
+            _types = new (string Name, Type Type)[] 
+		    { 
+			    (name1, type1),
+			    (name2, type2),
+		    };
         }
     }
 }
@@ -92,8 +128,17 @@ namespace WrapperValueObject
 
         private static readonly string[] MathTypes = new[]
         {
+            "System.SByte",
+            "System.Byte",
+            "System.Int16",
+            "System.UInt16",
+            "System.Int32",
+            "System.UInt32",
+            "System.Int64",
+            "System.UInt64",
             "System.Single",
             "System.Double",
+            "System.Decimal",
         };
 
         private bool GenerateWrapper(SourceGeneratorContext context, StringBuilder sourceBuilder, TypeDeclarationSyntax node, ISymbol type, string innerType)
@@ -133,6 +178,9 @@ namespace {type.ContainingNamespace}
         {{
             _value = other._value;
         }}
+
+");
+            sourceBuilder.AppendLine(@$"
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator {innerType}({type.Name} other) => other._value;
@@ -254,11 +302,11 @@ namespace {type.ContainingNamespace}
             return true;
         }
 
-        private bool GenerateWrapper(SourceGeneratorContext context, StringBuilder sourceBuilder, TypeDeclarationSyntax node, ISymbol type, IEnumerable<INamedTypeSymbol> innerTypes)
+        private bool GenerateWrapper(SourceGeneratorContext context, StringBuilder sourceBuilder, TypeDeclarationSyntax node, ISymbol type, IEnumerable<(string Name, INamedTypeSymbol Type)> innerTypes)
         {
             var isReadOnly = node.Modifiers.Any(m => m.IsKind(SyntaxKind.ReadOnlyKeyword));
 
-            var innerType = $"({string.Join(", ", innerTypes.Select(t => $"{t!.ContainingNamespace}.{t.Name}"))})";
+            var innerType = $"({string.Join(", ", innerTypes.Select(t => $"{t.Type.ContainingNamespace}.{t.Type.Name}"))})";
 
             var hasToString = node.Members
                 .Where(m => m.IsKind(SyntaxKind.MethodDeclaration))
@@ -285,9 +333,9 @@ namespace {type.ContainingNamespace}
         }}
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public {type.Name}({string.Join(", ", innerTypes.Select((t, i) => $"{t!.ContainingNamespace}.{t.Name} p{i}"))})
+        public {type.Name}({string.Join(", ", innerTypes.Select((t, i) => $"{t.Type.ContainingNamespace}.{t.Type.Name} {t.Name.FirstCharToLower()}"))})
         {{
-            _value = ({string.Join(", ", innerTypes.Select((t, i) => $"p{i}"))});
+            _value = ({string.Join(", ", innerTypes.Select((t, i) => t.Name.FirstCharToLower()))});
         }}
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -295,6 +343,19 @@ namespace {type.ContainingNamespace}
         {{
             _value = other._value;
         }}
+
+");
+
+
+            for (int i = 0; i < innerTypes.Count(); i++)
+            {
+                var t = innerTypes.ElementAt(i);
+                sourceBuilder.AppendLine(@$"
+        public readonly {t.Type.ContainingNamespace}.{t.Type.Name} {t.Name} => _value.Item{i + 1};
+");
+            }
+
+            sourceBuilder.AppendLine(@$"
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator {innerType}({type.Name} other) => other._value;
