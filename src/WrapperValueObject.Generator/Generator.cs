@@ -12,6 +12,23 @@ namespace WrapperValueObject.Generator
     [Generator]
     public class Generator : ISourceGenerator
     {
+        private static readonly DiagnosticDescriptor NoNestingRule = new DiagnosticDescriptor(
+            "WVOG00001",
+            "Target types for WrapperValueObject generator can't be nested within other types",
+            "Target types for WrapperValueObject generator can't be nested within other types",
+            typeof(Generator).FullName,
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true
+        );
+        private static readonly DiagnosticDescriptor MissingPartialModifierRule = new DiagnosticDescriptor(
+            "WVOG00002",
+            "Target types for WrapperValueObject generator must be partial",
+            "Target types for WrapperValueObject generator must be partial",
+            typeof(Generator).FullName,
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true
+        );
+
         public void Execute(SourceGeneratorContext context)
         {
             GenerateAttribute(context);
@@ -24,64 +41,71 @@ namespace WrapperValueObject.Generator
             {
                 var semanticModel = compilation.GetSemanticModel(tree);
                 
-                foreach (var node in tree.GetRoot().DescendantNodesAndSelf().OfType<TypeDeclarationSyntax>())
+                foreach (var node in tree.GetRoot().DescendantNodesAndSelf().OfType<AttributeListSyntax>())
                 {
-                    var isClassOrStruct = node is ClassDeclarationSyntax || node is StructDeclarationSyntax;
-                    if (!isClassOrStruct)
-                        continue;
-
-                    if (!node.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)))
-                        continue;
-
-                    if (!node.AttributeLists.Any())
-                        continue;
-
-                    //System.Diagnostics.Debugger.Launch();
-
-                    var type = semanticModel.GetDeclaredSymbol(node);
-                    var attribute = node!.AttributeLists
-                        .SelectMany(al => al.Attributes.Where(a => a.Name.ToString() == "WrapperValueObject"))
-                        .Where(a => a != null)
-                        .SingleOrDefault();
-                    if (attribute is null)
-                        continue;
-
-                    if (attribute.ArgumentList!.Arguments.Count == 1)
-                    {
-                        var wrapperType = (INamedTypeSymbol)semanticModel
-                            .GetSymbolInfo(((TypeOfExpressionSyntax)attribute.ArgumentList!.Arguments[0].Expression).Type).Symbol!;
-
-                        var csharpType = GenerateWrapper(context, sourceBuilder, node, type!, $"{wrapperType!.ContainingNamespace}.{wrapperType.Name}");
-                    }
-                    else
-                    {
-
-                        List<(string Name, INamedTypeSymbol Type)> innerTypes = new();
-
-                        var currentName = "Value";
-
-                        foreach (var a in attribute.ArgumentList.Arguments)
-                        {
-                            var expression = a.Expression;
-
-                            if (expression is TypeOfExpressionSyntax typeOfExpression)
-                            {
-                                // Single type
-                                var typeSymbol = semanticModel.GetSymbolInfo(typeOfExpression.Type).Symbol;
-                                innerTypes.Add((currentName, (INamedTypeSymbol)typeSymbol!));
-                                currentName = "Value";
-                            }
-                            else
-                            {
-                                // Value tuple config
-                                currentName = (string)semanticModel.GetConstantValue(expression).Value;
-                            }
-                        }
-
-                        GenerateWrapper(context, sourceBuilder, node, type!, innerTypes);
-                    }
+                    ProcessAttributeList(context, node, semanticModel, sourceBuilder);
 
                     sourceBuilder.Clear();
+                }
+            }
+
+            void ProcessAttributeList(SourceGeneratorContext context, AttributeListSyntax attributeListNode, SemanticModel semanticModel, StringBuilder sourceBuilder)
+            {
+                //System.Diagnostics.Debugger.Launch();
+
+                var attributeNode = attributeListNode.Attributes.SingleOrDefault(a => a.Name.ToString() == "WrapperValueObject");
+                if (attributeNode is null)
+                    return;
+
+                var node = (TypeDeclarationSyntax)attributeListNode.Parent!;
+
+                if (node.Parent is ClassDeclarationSyntax)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(NoNestingRule, node.GetLocation()));
+                    return;
+                }
+
+                if (!node.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(MissingPartialModifierRule, node.GetLocation()));
+                    return;
+                }
+
+                var type = semanticModel.GetDeclaredSymbol(node);
+
+                if (attributeNode.ArgumentList!.Arguments.Count == 1)
+                {
+                    var wrapperType = (INamedTypeSymbol)semanticModel
+                        .GetSymbolInfo(((TypeOfExpressionSyntax)attributeNode.ArgumentList!.Arguments[0].Expression).Type).Symbol!;
+
+                    _ = GenerateWrapper(context, sourceBuilder, node, type!, $"{wrapperType!.ContainingNamespace}.{wrapperType.Name}");
+                }
+                else
+                {
+
+                    List<(string Name, INamedTypeSymbol Type)> innerTypes = new();
+
+                    var currentName = "Value";
+
+                    foreach (var a in attributeNode.ArgumentList.Arguments)
+                    {
+                        var expression = a.Expression;
+
+                        if (expression is TypeOfExpressionSyntax typeOfExpression)
+                        {
+                            // Single type
+                            var typeSymbol = semanticModel.GetSymbolInfo(typeOfExpression.Type).Symbol;
+                            innerTypes.Add((currentName, (INamedTypeSymbol)typeSymbol!));
+                            currentName = "Value";
+                        }
+                        else
+                        {
+                            // Value tuple config
+                            currentName = (string)semanticModel.GetConstantValue(expression).Value;
+                        }
+                    }
+
+                    _ = GenerateWrapper(context, sourceBuilder, node, type!, innerTypes);
                 }
             }
         }
@@ -119,6 +143,27 @@ namespace WrapperValueObject
 			    (name2, type2),
 		    };
         }
+
+        public WrapperValueObjectAttribute(string name1, Type type1, string name2, Type type2, string name3, Type type3)
+        {
+            _types = new (string Name, Type Type)[] 
+		    { 
+			    (name1, type1),
+			    (name2, type2),
+			    (name3, type3),
+		    };
+        }
+
+        public WrapperValueObjectAttribute(string name1, Type type1, string name2, Type type2, string name3, Type type3, string name4, Type type4)
+        {
+            _types = new (string Name, Type Type)[] 
+		    { 
+			    (name1, type1),
+			    (name2, type2),
+			    (name3, type3),
+			    (name4, type4),
+		    };
+        }
     }
 }
 ";
@@ -144,8 +189,6 @@ namespace WrapperValueObject
         private bool GenerateWrapper(SourceGeneratorContext context, StringBuilder sourceBuilder, TypeDeclarationSyntax node, ISymbol type, string innerType)
         {
             var isReadOnly = node.Modifiers.Any(m => m.IsKind(SyntaxKind.ReadOnlyKeyword));
-
-            // TODO - options for methods to generate, don't generate methods where the user has already supplied them (i.e. custom ToString)
 
             var isMath = MathTypes.Contains(innerType);
 

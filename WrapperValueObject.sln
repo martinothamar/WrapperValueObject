@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{33A199CD-5
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WrapperValueObject.TestConsole", "test\WrapperValueObject.TestConsole\WrapperValueObject.TestConsole.csproj", "{DE9DA748-672E-4B91-9158-B73EAA7F5CD9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WrapperValueObject.Tests", "test\WrapperValueObject.Tests\WrapperValueObject.Tests.csproj", "{F7BB7839-9588-42ED-8825-049CB73BDE4B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +27,10 @@ Global
 		{DE9DA748-672E-4B91-9158-B73EAA7F5CD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE9DA748-672E-4B91-9158-B73EAA7F5CD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE9DA748-672E-4B91-9158-B73EAA7F5CD9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7BB7839-9588-42ED-8825-049CB73BDE4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7BB7839-9588-42ED-8825-049CB73BDE4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7BB7839-9588-42ED-8825-049CB73BDE4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7BB7839-9588-42ED-8825-049CB73BDE4B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -32,6 +38,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{D3A17935-A472-440E-B27D-49E1A6852E84} = {B759AFAF-FD91-4FE8-8AA0-420AC3CDDA39}
 		{DE9DA748-672E-4B91-9158-B73EAA7F5CD9} = {33A199CD-5FCA-40DA-8D04-D3510EB7F648}
+		{F7BB7839-9588-42ED-8825-049CB73BDE4B} = {33A199CD-5FCA-40DA-8D04-D3510EB7F648}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3F03858F-70C4-439B-BE1F-FB64588294CB}
