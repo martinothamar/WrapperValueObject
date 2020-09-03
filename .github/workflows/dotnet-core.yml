@@ -3,6 +3,7 @@ name: .NET Core
 on:
   push:
     branches: [ master ]
+    tags: '**'
   pull_request:
     branches: [ master ]
 
@@ -23,3 +24,12 @@ jobs:
       run: dotnet build --configuration Release --no-restore
     - name: Test
       run: dotnet test --no-restore --verbosity normal
+    - name: Get version
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      run: echo "::set-env name=VERSION::$(git describe --tags --dirty)"
+    - name: Pack
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      run: dotnet pack -c Release -o artifacts/ -p:Version=$VERSION
+    - name: Push
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      run: dotnet nuget push artifacts/**.nupkg -s nuget.org --api-key ${{secrets.NUGET_API_KEY}}
