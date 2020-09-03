@@ -4,6 +4,16 @@
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<LangVersion>preview</LangVersion>
 		<Nullable>enable</Nullable>
+		<IsPackable>true</IsPackable>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/martinothamar/WrapperValueObject</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/martinothamar/WrapperValueObject</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<PackageTags>source-generation source-gen source-generator sourcegenerator value-object C# .NET .NET5 dotnet dotnet5 DDD</PackageTags>
+		<Authors>Martin Othamar</Authors>
+		<Copyright>Copyright 2020 Martin Othamar</Copyright>
+		<DevelopmentDependency>true</DevelopmentDependency>
 	</PropertyGroup>
 
 	<PropertyGroup>
