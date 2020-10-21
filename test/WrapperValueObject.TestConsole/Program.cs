@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace WrapperValueObject.TestConsole
 {
-    [WrapperValueObject(typeof(Guid))]
+    [WrapperValueObject]
     public readonly partial struct MatchId
     {
         public static MatchId New() => Guid.NewGuid();
