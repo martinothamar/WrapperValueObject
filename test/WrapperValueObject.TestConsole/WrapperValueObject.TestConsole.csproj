@@ -8,8 +8,15 @@
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
-	<ItemGroup>
+	<!--<ItemGroup>
 	  <ProjectReference Include="..\..\src\WrapperValueObject.Generator\WrapperValueObject.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>-->
+
+	<ItemGroup>
+		<PackageReference Include="WrapperValueObject.Generator" Version="0.0.1-alpha04">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
 	
 </Project>
