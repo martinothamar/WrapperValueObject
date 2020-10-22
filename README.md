@@ -5,10 +5,15 @@
 
 A .NET source generator for creating
 * Simple value objects wrapping other type(s), without the hassle of manual `Equals`/`GetHashCode`
-* Value objects wrapping math primitives
-  * I.e. `[WrapperValueObject(typeof(int))] readonly partial struct MeterLength { }` - the type is implicitly castable to `int`, and you can create your own math operations
+* Value objects wrapping math primitives and other types
+  * I.e. `[WrapperValueObject(typeof(int))] readonly partial struct MeterLength { }` - the type is implicitly castable to `int`
+  * Math and comparison operator overloads are automatically generated
+  * `ToString` is generated with formatting options similar to those on the primitive type, i.e. `ToString(string? format, IFormatProvider? provider)` for math types
 * Strongly typed ID's
-  * Similar to F# `type ProductId = ProductId of Guid`, here it becomes `[WrapperValueObject] readonly partial struct ProductId { }`
+  * Similar to F# `type ProductId = ProductId of Guid`, here it becomes `[WrapperValueObject] readonly partial struct ProductId { }` with a `New()` function similar to `Guid.NewGuid()`
+
+The generator targets .NET Standard 2.0 and has been tested with `netcoreapp3.1` and `net5.0` target frameworks.
+The library is alpha quality.
 
 Note that record type feature for structs is planned for C# 10, in which cases some of the
 use cases this library supports will be easier to achieve without this libray.
@@ -30,10 +35,12 @@ Or install via CLI
 dotnet add package WrapperValueObject.Generator --version 0.0.1-alpha05
 ```
 
+This package is a build time dependency only.
+
 ## Usage
 
 1. Use the attribute to specify the underlying type.
-2. Declare the struct or class with the `partial` keyword. (and does not support nested types)
+2. Declare the struct or class with the `partial` keyword.
 
 ### Strongly typed ID
 
@@ -124,6 +131,16 @@ Debug.Assert(match.Result != default);
 Debug.Assert(match.Result.HomeGoals == 2);
 Debug.Assert(match.Result.AwayGoals == 1);
 ```
+
+## Limitations
+
+* Need .NET 5 SDK (I think) due to source generators
+* Does not support nested types
+* Limited configuration options in terms of what code is generated
+
+## Related projects and inspiration
+
+* [StronglyTypedId](https://github.com/andrewlock/StronglyTypedId) by @andrewlock
 
 ## TODO/under consideration
 
