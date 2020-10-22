@@ -6,7 +6,6 @@ namespace WrapperValueObject.TestConsole
     [WrapperValueObject]
     public readonly partial struct MatchId
     {
-        public static MatchId New() => Guid.NewGuid();
     }
 
     [WrapperValueObject("HomeGoals", typeof(byte), "AwayGoals", typeof(byte))]

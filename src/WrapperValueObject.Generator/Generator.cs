@@ -210,12 +210,16 @@ namespace WrapperValueObject
             var innerType = string.Empty;
             var isMathType = false;
             var isSingleType = context.InnerTypes.Count() == 1;
+            var isDefaultIdCase = false;
             if (isSingleType)
             {
                 // If we have 1 type, we might be able to safely generate math operations
                 var singleType = context.InnerTypes.Single();
                 innerType = $"{singleType.Type!.ContainingNamespace}.{singleType.Type.Name}";
                 isMathType = MathTypes!.Contains(innerType);
+                isDefaultIdCase = innerType == "System.Guid";
+
+                //System.Diagnostics.Debugger.Launch();
             }
             else
             {
@@ -267,6 +271,13 @@ namespace {context.Type.ContainingNamespace}
         }}
 
 ");
+
+            if (isDefaultIdCase)
+            {
+                context.SourceBuilder.AppendLine(@$"
+        public static {context.Type.Name} New() => Guid.NewGuid();
+");
+            }
 
             if (isSingleType)
             {

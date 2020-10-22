@@ -13,30 +13,8 @@ namespace WrapperValueObject.Tests
     {
     }
 
-    [WrapperValueObject(typeof(int))]
-    public readonly partial struct MeterLength 
-    {
-        public static implicit operator CentimeterLength(MeterLength meter) => meter.Value * 100;
-    }
-
-    [WrapperValueObject(typeof(int))]
-    public readonly partial struct CentimeterLength
-    {
-        public static implicit operator MeterLength(CentimeterLength centiMeter) => centiMeter.Value / 100;
-    }
-
     public class SimpleTypes
     {
-        [Fact]
-        public void Test_Metric_Types()
-        {
-            MeterLength meters = 2;
-
-            CentimeterLength centiMeters = meters;
-
-            Assert.Equal(200, (int)centiMeters);
-        }
-
         [Fact]
         public void Test_Guid_Type_Equals()
         {
