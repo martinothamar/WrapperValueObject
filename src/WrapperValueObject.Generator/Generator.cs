@@ -203,6 +203,12 @@ namespace WrapperValueObject
             "System.Decimal",
         };
 
+        private static readonly string[] ByteTypes = new[]
+        {
+            "System.SByte",
+            "System.Byte",
+        };
+
         private bool GenerateWrapper(in GenerationContext context)
         {
             var isReadOnly = context.Node.Modifiers.Any(m => m.IsKind(SyntaxKind.ReadOnlyKeyword));
@@ -319,6 +325,8 @@ namespace {context.Type.ContainingNamespace}
 
             if (isMathType)
             {
+                var isByteType = ByteTypes.Contains(innerType);
+
                 //                sourceBuilder.AppendLine(@$"
                 //");
                 context.SourceBuilder.AppendLine(@$"
@@ -333,17 +341,6 @@ namespace {context.Type.ContainingNamespace}
             => _value.TryFormat(destination, out charsWritten, format, provider);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static {context.Type.Name} operator +({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value + right._value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static {context.Type.Name} operator -({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value - right._value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static {context.Type.Name} operator /({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value / right._value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static {context.Type.Name} operator *({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value * right._value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static {context.Type.Name} operator %({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value % right._value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator <({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value < right._value;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -355,6 +352,37 @@ namespace {context.Type.ContainingNamespace}
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator >=({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value >= right._value;
 ");
+                if (isByteType)
+                {
+                    context.SourceBuilder.AppendLine(@$"
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int operator +({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value + right._value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int operator -({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value - right._value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int operator /({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value / right._value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int operator *({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value * right._value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int operator %({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value % right._value;
+                    ");
+                }
+                else
+                {
+                    context.SourceBuilder.AppendLine(@$"
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {context.Type.Name} operator +({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value + right._value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {context.Type.Name} operator -({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value - right._value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {context.Type.Name} operator /({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value / right._value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {context.Type.Name} operator *({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value * right._value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {context.Type.Name} operator %({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value % right._value);
+                    ");
+                }
+
             }
             else
             {

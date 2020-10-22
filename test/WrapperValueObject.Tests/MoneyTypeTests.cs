@@ -58,5 +58,17 @@ namespace WrapperValueObject.Tests
             Assert.True(money != result);
             Assert.True(money == 2m);
         }
+
+        [Fact]
+        public void Test_Modulo()
+        {
+            Money money = 2m;
+
+            var result = money % 2m;
+
+            Assert.Equal(((decimal)money) % 2m, (decimal)result);
+            Assert.True(money != result);
+            Assert.True(money == 2m);
+        }
     }
 }
