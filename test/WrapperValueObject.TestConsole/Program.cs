@@ -48,6 +48,8 @@ namespace WrapperValueObject.TestConsole
             Debug.Assert(match.Result != default);
             Debug.Assert(match.Result.HomeGoals == 2);
             Debug.Assert(match.Result.AwayGoals == 1);
+
+            Console.WriteLine("Success!!");
         }
     }
 }
