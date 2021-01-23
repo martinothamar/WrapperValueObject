@@ -19,8 +19,8 @@ namespace WrapperValueObject.Tests
 
             Assert.True(result == result10);
             Assert.Equal(((byte)probability) + 5, (byte)result);
-            Assert.True(probability != result);
-            Assert.True(probability == 10);
+            Assert.True((byte)probability != result);
+            Assert.True((byte)probability == 10);
         }
 
         [Fact]
@@ -33,8 +33,8 @@ namespace WrapperValueObject.Tests
 
             Assert.True(result == result10);
             Assert.Equal(((byte)probability) - 5, (byte)result);
-            Assert.True(probability != result);
-            Assert.True(probability == 10);
+            Assert.True((byte)probability != result);
+            Assert.True((byte)probability == 10);
         }
 
         [Fact]
@@ -47,8 +47,8 @@ namespace WrapperValueObject.Tests
 
             Assert.True(result == result10);
             Assert.Equal(((byte)probability) * 5, (byte)result);
-            Assert.True(probability != result);
-            Assert.True(probability == 10);
+            Assert.True((byte)probability != result);
+            Assert.True((byte)probability == 10);
         }
 
         [Fact]
@@ -61,8 +61,8 @@ namespace WrapperValueObject.Tests
 
             Assert.True(result == result10);
             Assert.Equal(((byte)probability) / 5, (byte)result);
-            Assert.True(probability != result);
-            Assert.True(probability == 10);
+            Assert.True((byte)probability != result);
+            Assert.True((byte)probability == 10);
         }
 
         [Fact]
@@ -75,8 +75,8 @@ namespace WrapperValueObject.Tests
 
             Assert.True(result == result10);
             Assert.Equal(((byte)probability) % 5, (byte)result);
-            Assert.True(probability != result);
-            Assert.True(probability == 10);
+            Assert.True((byte)probability != result);
+            Assert.True((byte)probability == 10);
         }
     }
 }
