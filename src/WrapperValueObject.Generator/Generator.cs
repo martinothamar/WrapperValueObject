@@ -9,235 +9,224 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace WrapperValueObject.Generator
 {
-    [Generator]
-    public partial class Generator : ISourceGenerator
-    {
-        private static readonly DiagnosticDescriptor NoNestingRule = new DiagnosticDescriptor(
-            "WVOG00001",
-            "Target types for WrapperValueObject generator can't be nested within other types",
-            "Target types for WrapperValueObject generator can't be nested within other types",
-            typeof(Generator).FullName,
-            DiagnosticSeverity.Error,
-            isEnabledByDefault: true
-        );
-        private static readonly DiagnosticDescriptor MissingPartialModifierRule = new DiagnosticDescriptor(
-            "WVOG00002",
-            "Target types for WrapperValueObject generator must be partial",
-            "Target types for WrapperValueObject generator must be partial",
-            typeof(Generator).FullName,
-            DiagnosticSeverity.Error,
-            isEnabledByDefault: true
-        );
+	[Generator]
+	public partial class Generator : ISourceGenerator
+	{
+		private static readonly DiagnosticDescriptor NoNestingRule = new DiagnosticDescriptor(
+			"WVOG00001",
+			"Target types for WrapperValueObject generator can't be nested within other types",
+			"Target types for WrapperValueObject generator can't be nested within other types",
+			typeof(Generator).FullName,
+			DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+		private static readonly DiagnosticDescriptor MissingPartialModifierRule = new DiagnosticDescriptor(
+			"WVOG00002",
+			"Target types for WrapperValueObject generator must be partial",
+			"Target types for WrapperValueObject generator must be partial",
+			typeof(Generator).FullName,
+			DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 
-        public void Execute(GeneratorExecutionContext context)
-        {
-            GenerateAttribute(context);
+		public void Execute(GeneratorExecutionContext context)
+		{
+			GenerateAttribute(context);
 
-            var compilation = context.Compilation;
+			var compilation = context.Compilation;
 
-            var sourceBuilder = new StringBuilder();
+			var sourceBuilder = new StringBuilder();
 
-            foreach (var tree in compilation.SyntaxTrees)
-            {
-                var semanticModel = compilation.GetSemanticModel(tree);
-                
-                foreach (var node in tree.GetRoot().DescendantNodesAndSelf().OfType<AttributeListSyntax>())
-                {
-                    ProcessAttributeList(context, node, semanticModel, sourceBuilder);
+			foreach (var tree in compilation.SyntaxTrees)
+			{
+				var semanticModel = compilation.GetSemanticModel(tree);
 
-                    sourceBuilder.Clear();
-                }
-            }
+				foreach (var node in tree.GetRoot().DescendantNodesAndSelf().OfType<AttributeListSyntax>())
+				{
+					ProcessAttributeList(context, node, semanticModel, sourceBuilder);
 
-            void ProcessAttributeList(GeneratorExecutionContext context, AttributeListSyntax attributeListNode, SemanticModel semanticModel, StringBuilder sourceBuilder)
-            {
-                //System.Diagnostics.Debugger.Launch();
+					sourceBuilder.Clear();
+				}
+			}
 
-                var attributeNode = attributeListNode.Attributes.SingleOrDefault(a => a.Name.ToString() == "WrapperValueObject");
-                if (attributeNode is null)
-                    return;
+			void ProcessAttributeList(GeneratorExecutionContext context, AttributeListSyntax attributeListNode, SemanticModel semanticModel, StringBuilder sourceBuilder)
+			{
+				// System.Diagnostics.Debugger.Launch();
 
-                var node = (TypeDeclarationSyntax)attributeListNode.Parent!;
+				var attributeNode = attributeListNode.Attributes.SingleOrDefault(a => a.Name.ToString() == "WrapperValueObject");
+				if (attributeNode is null)
+					return;
 
-                if (node.Parent is ClassDeclarationSyntax)
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(NoNestingRule, node.GetLocation()));
-                    return;
-                }
+				var node = (TypeDeclarationSyntax)attributeListNode.Parent!;
 
-                if (!node.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)))
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(MissingPartialModifierRule, node.GetLocation()));
-                    return;
-                }
+				if (node.Parent is ClassDeclarationSyntax)
+				{
+					context.ReportDiagnostic(Diagnostic.Create(NoNestingRule, node.GetLocation()));
+					return;
+				}
 
-                var type = semanticModel.GetDeclaredSymbol(node);
+				if (!node.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)))
+				{
+					context.ReportDiagnostic(Diagnostic.Create(MissingPartialModifierRule, node.GetLocation()));
+					return;
+				}
 
-                List<(string Name, INamedTypeSymbol Type)> innerTypes = new();
+				var type = semanticModel.GetDeclaredSymbol(node);
 
-                var currentName = "Value";
+				List<(string Name, INamedTypeSymbol Type)> innerTypes = new();
 
-                if (attributeNode.ArgumentList?.Arguments is null)
-                {
-                    innerTypes.Add(("Value", context.Compilation.GetTypeByMetadataName("System.Guid")!));
-                }
-                else
-                {
-                    foreach (var a in attributeNode.ArgumentList.Arguments)
-                    {
-                        var expression = a.Expression;
+				var currentName = "Value";
+				bool generateImplicitConversionToPrimitive = false;
+				bool? generateComparisonOperators = default;
+				bool? generateMathOperators = default;
 
-                        if (expression is TypeOfExpressionSyntax typeOfExpression)
-                        {
-                            // Single type
-                            var typeSymbol = semanticModel.GetSymbolInfo(typeOfExpression.Type).Symbol;
-                            innerTypes.Add((currentName, (INamedTypeSymbol)typeSymbol!));
-                            currentName = "Value";
-                        }
-                        else
-                        {
-                            // Value tuple config
-                            currentName = (string)semanticModel.GetConstantValue(expression).Value;
-                        }
-                    }
-                }
+				if (attributeNode.ArgumentList?.Arguments is null)
+				{
+					innerTypes.Add(("Value", context.Compilation.GetTypeByMetadataName("System.Guid")!));
+				}
+				else
+				{
+					var flag = false;
 
-                var generationContext = new GenerationContext(context, sourceBuilder, node, type!, innerTypes);
+					foreach (var a in attributeNode.ArgumentList.Arguments)
+					{
+						var expression = a.Expression;
 
-                _ = GenerateWrapper(in generationContext);
-            }
-        }
+						if (expression is TypeOfExpressionSyntax typeOfExpression)
+						{
+							// Single type
+							flag = true;
+							var typeSymbol = semanticModel.GetSymbolInfo(typeOfExpression.Type).Symbol;
+							innerTypes.Add((currentName!, (INamedTypeSymbol)typeSymbol!));
+							currentName = "Value";
+						}
+						else if (a.NameEquals != null)
+						{
+							var id = a.NameEquals.Name.Identifier;
 
-        private void GenerateAttribute(GeneratorExecutionContext context)
-        {
-            string attributeSource = @"
-using System;
-    
-namespace WrapperValueObject
-{
-    [Flags]
-    public enum WrapperValueObjectJsonConverter
-    {
-        None = 0,
-        NewtonsoftJson = 1,
-        SystemTextJson = 2,
-    }
+							switch (id.ValueText)
+							{
+								case "GenerateImplicitConversionToPrimitive":
+									generateImplicitConversionToPrimitive = expression.Kind() == SyntaxKind.TrueLiteralExpression;
+									break;
 
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
-    public class WrapperValueObjectAttribute : Attribute
-    {
-        private readonly (string Name, Type Type)[] _types;
-        private readonly WrapperValueObjectJsonConverter _generateJsonConverter;
+								case "GenerateComparisonOperators":
+									generateComparisonOperators =
+										((MemberAccessExpressionSyntax)expression).Name.Identifier.ValueText switch
+										{
+											"True" => true,
+											"False" => false,
+											_ => default(bool?),
+										};
+									break;
 
-        public WrapperValueObjectAttribute(WrapperValueObjectJsonConverter generateJsonConverter = WrapperValueObjectJsonConverter.SystemTextJson) 
-            : this(typeof(Guid), generateJsonConverter)
-        {
-        }
+								case "GenerateMathOperators":
+									generateMathOperators =
+										((MemberAccessExpressionSyntax)expression).Name.Identifier.ValueText switch
+										{
+											"True" => true,
+											"False" => false,
+											_ => default(bool?),
+										};
+									break;
 
-        public WrapperValueObjectAttribute(Type type, WrapperValueObjectJsonConverter generateJsonConverter = WrapperValueObjectJsonConverter.SystemTextJson)
-        {
-            _types = new (string Name, Type Type)[] { (""Value"", type) };
-            _generateJsonConverter = generateJsonConverter;
-        }
+							}
+						}
+						else
+						{
+							// Value tuple config
+							currentName = (string)semanticModel.GetConstantValue(expression).Value!;
+						}
+					}
 
-        public WrapperValueObjectAttribute(string name1, Type type1, WrapperValueObjectJsonConverter generateJsonConverter = WrapperValueObjectJsonConverter.SystemTextJson)
-        {
-            _types = new (string Name, Type Type)[] 
-		    { 
-			    (name1, type1),
-		    };
-            _generateJsonConverter = generateJsonConverter;
-        }
+					if (!flag)
+						innerTypes.Add(("Value", context.Compilation.GetTypeByMetadataName("System.Guid")!));
+				}
 
-        public WrapperValueObjectAttribute(string name1, Type type1, string name2, Type type2, WrapperValueObjectJsonConverter generateJsonConverter = WrapperValueObjectJsonConverter.SystemTextJson)
-        {
-            _types = new (string Name, Type Type)[] 
-		    { 
-			    (name1, type1),
-			    (name2, type2),
-		    };
-            _generateJsonConverter = generateJsonConverter;
-        }
+				var generationContext = new GenerationContext(
+					context,
+					sourceBuilder,
+					node,
+					type!,
+					innerTypes,
+					generateImplicitConversionToPrimitive,
+					generateComparisonOperators,
+					generateMathOperators);
 
-        public WrapperValueObjectAttribute(string name1, Type type1, string name2, Type type2, string name3, Type type3, WrapperValueObjectJsonConverter generateJsonConverter = WrapperValueObjectJsonConverter.SystemTextJson)
-        {
-            _types = new (string Name, Type Type)[] 
-		    { 
-			    (name1, type1),
-			    (name2, type2),
-			    (name3, type3),
-		    };
-            _generateJsonConverter = generateJsonConverter;
-        }
+				_ = GenerateWrapper(in generationContext);
+			}
+		}
 
-        public WrapperValueObjectAttribute(string name1, Type type1, string name2, Type type2, string name3, Type type3, string name4, Type type4, WrapperValueObjectJsonConverter generateJsonConverter = WrapperValueObjectJsonConverter.SystemTextJson)
-        {
-            _types = new (string Name, Type Type)[] 
-		    { 
-			    (name1, type1),
-			    (name2, type2),
-			    (name3, type3),
-			    (name4, type4),
-		    };
-            _generateJsonConverter = generateJsonConverter;
-        }
-    }
-}
-";
+		private void GenerateAttribute(GeneratorExecutionContext context)
+		{
+			var attributeSource = EmbeddedResource.GetContent(@"resources\WrapperValueObjectAttribute.cs");
+			context.AddSource("WrapperValueObjectAttribute.cs", SourceText.From(attributeSource, Encoding.UTF8));
+		}
 
-            context.AddSource("Attribute", SourceText.From(attributeSource, Encoding.UTF8));
-        }
+		private static readonly string[] MathTypes = new[]
+		{
+			"System.SByte",
+			"System.Byte",
+			"System.Int16",
+			"System.UInt16",
+			"System.Int32",
+			"System.UInt32",
+			"System.Int64",
+			"System.UInt64",
+			"System.Single",
+			"System.Double",
+			"System.Decimal",
+		};
 
-        private static readonly string[] MathTypes = new[]
-        {
-            "System.SByte",
-            "System.Byte",
-            "System.Int16",
-            "System.UInt16",
-            "System.Int32",
-            "System.UInt32",
-            "System.Int64",
-            "System.UInt64",
-            "System.Single",
-            "System.Double",
-            "System.Decimal",
-        };
+		private static readonly string[] ByteTypes = new[]
+		{
+			"System.SByte",
+			"System.Byte",
+		};
 
-        private static readonly string[] ByteTypes = new[]
-        {
-            "System.SByte",
-            "System.Byte",
-        };
+		private bool GenerateWrapper(in GenerationContext context)
+		{
+			var isReadOnly = context.Node.Modifiers.Any(m => m.IsKind(SyntaxKind.ReadOnlyKeyword));
 
-        private bool GenerateWrapper(in GenerationContext context)
-        {
-            var isReadOnly = context.Node.Modifiers.Any(m => m.IsKind(SyntaxKind.ReadOnlyKeyword));
+			var innerType = string.Empty;
+			var isSingleType = context.InnerTypes.Count() == 1;
+			var isDefaultIdCase = false;
 
-            var innerType = string.Empty;
-            var isMathType = false;
-            var isSingleType = context.InnerTypes.Count() == 1;
-            var isDefaultIdCase = false;
-            if (isSingleType)
-            {
-                // If we have 1 type, we might be able to safely generate math operations
-                var singleType = context.InnerTypes.Single();
-                innerType = $"{singleType.Type!.ContainingNamespace}.{singleType.Type.Name}";
-                isMathType = MathTypes!.Contains(innerType);
-                isDefaultIdCase = innerType == "System.Guid";
+			var implicitConversion = context.GenerateImplicitConversionToPrimitive;
+			var comparison = context.GenerateComparisonOperators;
+			var math = context.GenerateMathOperators;
+			var isNumericType = false;
 
-                //System.Diagnostics.Debugger.Launch();
-            }
-            else
-            {
-                innerType = context.InnerTypes.Count() == 1 ? "" : $"({string.Join(", ", context.InnerTypes.Select(t => $"{t.Type.ContainingNamespace}.{t.Type.Name}"))})";
-            }
+			if (isSingleType)
+			{
+				// If we have 1 type, we might be able to safely generate math operations
+				var singleType = context.InnerTypes.Single();
+				innerType = $"{singleType.Type!.ContainingNamespace}.{singleType.Type.Name}";
+				isDefaultIdCase = innerType == "System.Guid";
 
-            var hasToString = context.Node.Members
-                .Where(m => m.IsKind(SyntaxKind.MethodDeclaration))
-                .Cast<MethodDeclarationSyntax>()
-                .Any(m => m.Modifiers.Any(mo => mo.IsKind(SyntaxKind.OverrideKeyword)) && m.Identifier.Text == "ToString" && !m.ParameterList.Parameters.Any());
+				if (MathTypes!.Contains(innerType))
+				{
+					isNumericType = true;
+					math ??= !context.Type.Name.EndsWith("Id");
+					comparison ??= !context.Type.Name.EndsWith("Id");
+				}
+				else
+				{
+					comparison = math = false;
+				}
+			}
+			else
+			{
+				innerType = context.InnerTypes.Count() == 1 ? "" : $"({string.Join(", ", context.InnerTypes.Select(t => $"{t.Type.ContainingNamespace}.{t.Type.Name}"))})";
+				comparison = math = false;
+			}
 
-            context.SourceBuilder.AppendLine(@$"
+			var hasToString = context.Node.Members
+				.Where(m => m.IsKind(SyntaxKind.MethodDeclaration))
+				.Cast<MethodDeclarationSyntax>()
+				.Any(m => m.Modifiers.Any(mo => mo.IsKind(SyntaxKind.OverrideKeyword)) && m.Identifier.Text == "ToString" && !m.ParameterList.Parameters.Any());
+
+			context.SourceBuilder.AppendLine(@$"
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -257,9 +246,9 @@ namespace {context.Type.ContainingNamespace}
         }}
 ");
 
-            if (!isSingleType)
-            {
-                context.SourceBuilder.AppendLine(@$"
+			if (!isSingleType)
+			{
+				context.SourceBuilder.AppendLine(@$"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public {context.Type.Name}({string.Join(", ", context.InnerTypes.Select((t, i) => $"{t.Type.ContainingNamespace}.{t.Type.Name} {t.Name.FirstCharToLower()}"))})
         {{
@@ -267,9 +256,9 @@ namespace {context.Type.ContainingNamespace}
         }}
 ");
 
-            }
+			}
 
-            context.SourceBuilder.AppendLine(@$"
+			context.SourceBuilder.AppendLine(@$"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public {context.Type.Name}({(isReadOnly ? "in " : "")}{context.Type.Name} other)
         {{
@@ -278,36 +267,49 @@ namespace {context.Type.ContainingNamespace}
 
 ");
 
-            if (isDefaultIdCase)
-            {
-                context.SourceBuilder.AppendLine(@$"
+			if (isDefaultIdCase)
+			{
+				context.SourceBuilder.AppendLine(@$"
         public static {context.Type.Name} New() => Guid.NewGuid();
 ");
-            }
+			}
 
-            if (isSingleType)
-            {
-                context.SourceBuilder.AppendLine(@$"
+			if (isSingleType)
+			{
+				context.SourceBuilder.AppendLine(@$"
         public readonly {innerType} {context.InnerTypes.Single().Name} => _value;
 ");
-            }
-            else
-            {
-                for (int i = 0; i < context.InnerTypes.Count(); i++)
-                {
-                    var t = context.InnerTypes.ElementAt(i);
-                    context.SourceBuilder.AppendLine(@$"
+			}
+			else
+			{
+				for (int i = 0; i < context.InnerTypes.Count(); i++)
+				{
+					var t = context.InnerTypes.ElementAt(i);
+					context.SourceBuilder.AppendLine(@$"
         public readonly {t.Type.ContainingNamespace}.{t.Type.Name} {t.Name} => _value.Item{i + 1};
 ");
-                }
-            }
+				}
+			}
 
-            context.SourceBuilder.AppendLine(@$"
+			context.SourceBuilder.AppendLine(@$"
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator {innerType}({context.Type.Name} other) => other._value;
+        public static implicit operator {context.Type.Name}({innerType} other) => new {context.Type.Name}(other);");
+
+			if (implicitConversion)
+			{
+				context.SourceBuilder.AppendLine(@$"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator {context.Type.Name}({innerType} other) => new {context.Type.Name}(other);
+        public static implicit operator {innerType}({context.Type.Name} other) => other._value;");
+			}
+			else
+			{
+				context.SourceBuilder.AppendLine(@$"
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator {innerType}({context.Type.Name} other) => other._value;");
+			}
+
+			context.SourceBuilder.AppendLine(@$"
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object? obj) => _value.Equals(obj);
@@ -323,13 +325,9 @@ namespace {context.Type.ContainingNamespace}
 
 ");
 
-            if (isMathType)
-            {
-                var isByteType = ByteTypes.Contains(innerType);
-
-                //                sourceBuilder.AppendLine(@$"
-                //");
-                context.SourceBuilder.AppendLine(@$"
+			if (isNumericType)
+			{
+				context.SourceBuilder.AppendLine(@$"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string ToString(IFormatProvider? provider) => _value.ToString(provider);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -338,7 +336,51 @@ namespace {context.Type.ContainingNamespace}
         public string ToString(string? format, IFormatProvider? provider) => _value.ToString(format, provider);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format = default, IFormatProvider? provider = null)
-            => _value.TryFormat(destination, out charsWritten, format, provider);
+            => _value.TryFormat(destination, out charsWritten, format, provider);");
+			}
+
+			if (math == true)
+			{
+				var isByteType = ByteTypes.Contains(innerType);
+
+				if (isByteType)
+				{
+					context.SourceBuilder.AppendLine(@$"
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int operator +({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value + right._value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int operator -({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value - right._value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int operator /({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value / right._value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int operator *({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value * right._value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int operator %({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value % right._value;
+                    ");
+				}
+				else
+				{
+					context.SourceBuilder.AppendLine(@$"
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {context.Type.Name} operator +({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value + right._value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {context.Type.Name} operator -({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value - right._value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {context.Type.Name} operator /({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value / right._value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {context.Type.Name} operator *({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value * right._value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static {context.Type.Name} operator %({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value % right._value);
+                    ");
+				}
+
+			}
+
+			if (comparison == true)
+			{
+				if (isNumericType)
+				{
+					context.SourceBuilder.AppendLine(@$"
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator <({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value < right._value;
@@ -352,41 +394,10 @@ namespace {context.Type.ContainingNamespace}
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator >=({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value >= right._value;
 ");
-                if (isByteType)
-                {
-                    context.SourceBuilder.AppendLine(@$"
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int operator +({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value + right._value;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int operator -({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value - right._value;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int operator /({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value / right._value;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int operator *({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value * right._value;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int operator %({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value % right._value;
-                    ");
-                }
-                else
-                {
-                    context.SourceBuilder.AppendLine(@$"
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static {context.Type.Name} operator +({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value + right._value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static {context.Type.Name} operator -({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value - right._value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static {context.Type.Name} operator /({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value / right._value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static {context.Type.Name} operator *({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value * right._value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static {context.Type.Name} operator %({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => new {context.Type.Name}(left._value % right._value);
-                    ");
-                }
-
-            }
-            else
-            {
-                context.SourceBuilder.AppendLine(@$"
+				}
+				else
+				{
+					context.SourceBuilder.AppendLine(@$"
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator <({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value.CompareTo(right._value) == -1;
@@ -408,29 +419,30 @@ namespace {context.Type.ContainingNamespace}
             return result == 1 || result == 0;
         }}
 ");
-            }
+				}
+			}
 
-            if (!hasToString)
-            {
+			if (!hasToString)
+			{
 
-                context.SourceBuilder.AppendLine(@$"
+				context.SourceBuilder.AppendLine(@$"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString() => _value.ToString();
 ");
-            }
+			}
 
-            if (isReadOnly)
-            {
-                context.SourceBuilder.AppendLine(@$"
+			if (isReadOnly)
+			{
+				context.SourceBuilder.AppendLine(@$"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(in {context.Type.Name} obj)
         {{
             return _value.Equals(obj._value);
         }}
 ");
-            }
+			}
 
-            context.SourceBuilder.AppendLine(@$"
+			context.SourceBuilder.AppendLine(@$"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value == right._value;
 
@@ -438,29 +450,29 @@ namespace {context.Type.ContainingNamespace}
         public static bool operator !=({(isReadOnly ? "in " : "")}{context.Type.Name} left, {(isReadOnly ? "in " : "")}{context.Type.Name} right) => left._value != right._value;
     }}");
 
-            context.SourceBuilder.AppendLine(@$"
+			context.SourceBuilder.AppendLine(@$"
 }}");
 
-            context.Context.AddSource($"{context.Type.Name}_Implementation.cs", SourceText.From(context.SourceBuilder.ToString(), Encoding.UTF8));
-            return true;
+			context.Context.AddSource($"{context.Type.Name}_Implementation.cs", SourceText.From(context.SourceBuilder.ToString(), Encoding.UTF8));
+			return true;
 
-            static void GenerateSystemTextJsonConverter(
-                GeneratorExecutionContext context,
-                StringBuilder sourceBuilder,
-                TypeDeclarationSyntax node,
-                ISymbol type,
-                IEnumerable<(string Name, INamedTypeSymbol Type)> innerTypes
-            )
-            {
+			static void GenerateSystemTextJsonConverter(
+				GeneratorExecutionContext context,
+				StringBuilder sourceBuilder,
+				TypeDeclarationSyntax node,
+				ISymbol type,
+				IEnumerable<(string Name, INamedTypeSymbol Type)> innerTypes
+			)
+			{
 
-                sourceBuilder.AppendLine(@$"
+				sourceBuilder.AppendLine(@$"
     public sealed class {type.Name}JsonConverter
 ");
-            }
-        }
+			}
+		}
 
-        public void Initialize(GeneratorInitializationContext context)
-        {
-        }
-    }
+		public void Initialize(GeneratorInitializationContext context)
+		{
+		}
+	}
 }

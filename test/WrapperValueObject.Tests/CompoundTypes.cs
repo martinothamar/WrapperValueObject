@@ -13,7 +13,7 @@ namespace WrapperValueObject.Tests
         [Fact]
         public void Test_Compound_Type_Equality()
         {
-            MatchId id = Guid.NewGuid();
+            MatchId id = 3;
 
             MatchResult result = (id, 1, 2);
 
