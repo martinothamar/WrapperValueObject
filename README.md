@@ -23,7 +23,7 @@ use cases this library supports will be easier to achieve without this libray.
 Add to your project file:
 
 ```xml
-<PackageReference Include="WrapperValueObject.Generator" Version="0.0.1-alpha06">
+<PackageReference Include="WrapperValueObject.Generator" Version="0.0.1-alpha08">
   <PrivateAssets>all</PrivateAssets>
   <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 </PackageReference>
@@ -32,7 +32,7 @@ Add to your project file:
 Or install via CLI
 
 ```sh
-dotnet add package WrapperValueObject.Generator --version 0.0.1-alpha06
+dotnet add package WrapperValueObject.Generator --version 0.0.1-alpha08
 ```
 
 This package is a build time dependency only.
