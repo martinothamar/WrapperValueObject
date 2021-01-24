@@ -159,7 +159,7 @@ namespace WrapperValueObject.Generator
 
 		private void GenerateAttribute(GeneratorExecutionContext context)
 		{
-			var attributeSource = EmbeddedResource.GetContent(@"resources\WrapperValueObjectAttribute.cs");
+			var attributeSource = EmbeddedResource.GetContent(@"resources/WrapperValueObjectAttribute.cs");
 			context.AddSource("WrapperValueObjectAttribute.cs", SourceText.From(attributeSource, Encoding.UTF8));
 		}
 
