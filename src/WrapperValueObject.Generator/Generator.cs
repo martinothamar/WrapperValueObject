@@ -239,9 +239,12 @@ namespace {context.Type.ContainingNamespace}
     {{
         private readonly {innerType} _value;
 
+		static partial void Validate({innerType} value);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public {context.Type.Name}({innerType} other)
         {{
+			Validate(other);
             _value = other;
         }}
 ");
@@ -252,6 +255,7 @@ namespace {context.Type.ContainingNamespace}
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public {context.Type.Name}({string.Join(", ", context.InnerTypes.Select((t, i) => $"{t.Type.ContainingNamespace}.{t.Type.Name} {t.Name.FirstCharToLower()}"))})
         {{
+            Validate(({string.Join(", ", context.InnerTypes.Select((t, i) => t.Name.FirstCharToLower()))}));
             _value = ({string.Join(", ", context.InnerTypes.Select((t, i) => t.Name.FirstCharToLower()))});
         }}
 ");
