@@ -65,7 +65,7 @@ namespace WrapperValueObject.Tests
 			Assert.Throws<ArgumentException>(
 				() => (ValidateMultipleId)(1, double.NaN));
 			Assert.Throws<ArgumentException>(
-				() => new ValidateMultipleId((1, double.NaN)));
+				() => new ValidateMultipleId(1, double.NaN));
 		}
 
 		[Fact]
@@ -73,7 +73,7 @@ namespace WrapperValueObject.Tests
 		{
 			var v1 = (ValidateMultipleId)(1, 2d);
 			Assert.Equal((1, 2d), v1);
-			var v2 = new ValidateMultipleId((int.MaxValue, double.MinValue));
+			var v2 = new ValidateMultipleId(int.MaxValue, double.MinValue);
 			Assert.Equal((int.MaxValue, double.MinValue), v2);
 		}
 	}
