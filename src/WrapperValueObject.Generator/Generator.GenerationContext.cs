@@ -13,7 +13,7 @@ namespace WrapperValueObject.Generator
 			public readonly StringBuilder SourceBuilder;
 			public readonly TypeDeclarationSyntax Node;
 			public readonly ISymbol Type;
-			public readonly IEnumerable<(string Name, INamedTypeSymbol Type)> InnerTypes;
+			public readonly IReadOnlyList<(string Name, INamedTypeSymbol Type)> InnerTypes;
 			public readonly bool GenerateImplicitConversionToPrimitive;
 			public readonly bool? GenerateComparisonOperators;
 			public readonly bool? GenerateMathOperators;
@@ -23,7 +23,7 @@ namespace WrapperValueObject.Generator
 				StringBuilder sourceBuilder,
 				TypeDeclarationSyntax node,
 				ISymbol type,
-				IEnumerable<(string Name, INamedTypeSymbol Type)> innerTypes,
+				IReadOnlyList<(string Name, INamedTypeSymbol Type)> innerTypes,
 				bool generateImplicitConversionToPrimitive,
 				bool? generateComparisonOperators,
 				bool? generateMathOperators
