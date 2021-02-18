@@ -238,28 +238,42 @@ namespace {context.Type.ContainingNamespace}
     partial {(context.Node is ClassDeclarationSyntax ? "class" : "struct")} {context.Type.Name} : IEquatable<{context.Type.Name}>, IComparable<{context.Type.Name}>
     {{
         private readonly {innerType} _value;
+");
 
+			if (isSingleType)
+			{
+				context.SourceBuilder.AppendLine(@$"			
 		static partial void Validate({innerType} value);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public {context.Type.Name}({innerType} other)
         {{
 			Validate(other);
             _value = other;
         }}
 ");
-
-			if (!isSingleType)
+			}
+			else
 			{
+				var parameters = string.Join(", ", context.InnerTypes.Select((t, i) => $"{t.Type.ContainingNamespace}.{t.Type.Name} {t.Name.FirstCharToLower()}"));
+				var calls = string.Join(", ", context.InnerTypes.Select((t, i) => t.Name.FirstCharToLower()));
 				context.SourceBuilder.AppendLine(@$"
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public {context.Type.Name}({string.Join(", ", context.InnerTypes.Select((t, i) => $"{t.Type.ContainingNamespace}.{t.Type.Name} {t.Name.FirstCharToLower()}"))})
+		static partial void Validate({parameters});
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public {context.Type.Name}({innerType} other)
         {{
-            Validate(({string.Join(", ", context.InnerTypes.Select((t, i) => t.Name.FirstCharToLower()))}));
-            _value = ({string.Join(", ", context.InnerTypes.Select((t, i) => t.Name.FirstCharToLower()))});
+			Validate({string.Join(", ", context.InnerTypes.Select((t, i) => $"other.Item{i + 1}"))});
+            _value = other;
+        }}
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public {context.Type.Name}({parameters})
+        {{
+            Validate({calls});
+            _value = ({calls});
         }}
 ");
-
 			}
 
 			context.SourceBuilder.AppendLine(@$"
@@ -288,7 +302,7 @@ namespace {context.Type.ContainingNamespace}
 			{
 				for (int i = 0; i < context.InnerTypes.Count(); i++)
 				{
-					var t = context.InnerTypes.ElementAt(i);
+					var t = context.InnerTypes[i];
 					context.SourceBuilder.AppendLine(@$"
         public readonly {t.Type.ContainingNamespace}.{t.Type.Name} {t.Name} => _value.Item{i + 1};
 ");
