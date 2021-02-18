@@ -132,6 +132,35 @@ Debug.Assert(match.Result.HomeGoals == 2);
 Debug.Assert(match.Result.AwayGoals == 1);
 ```
 
+### Validation 
+
+To make sure only valid instances are created.
+The validate function will be called in the generated constructors.
+
+```csharp
+[WrapperValueObject] // Is Guid ID by default
+readonly partial struct MatchId
+{ 
+    static partial void Validate(Guid id)
+    {
+        if (id == Guid.Empty)
+            throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(id)} must have value");
+    }
+}
+
+[WrapperValueObject("HomeGoals", typeof(byte), "AwayGoals", typeof(byte))]
+readonly partial struct MatchResult 
+{ 
+    static partial void Validate(byte homeGoals, byte awayGoals)
+    {
+        if (homeGoals < 0)
+            throw new ArgumentOutOfRangeException(nameof(homeGoals), $"{nameof(homeGoals)} value cannot be less than 0");
+        if (awayGoals < 0)
+            throw new ArgumentOutOfRangeException(nameof(awayGoals), $"{nameof(awayGoals)} value cannot be less than 0");
+    }
+}
+```
+
 ## Limitations
 
 * Need .NET 5 SDK (I think) due to source generators
