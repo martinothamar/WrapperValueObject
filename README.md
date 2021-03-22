@@ -13,17 +13,15 @@ A .NET source generator for creating
   * Similar to F# `type ProductId = ProductId of Guid`, here it becomes `[WrapperValueObject] readonly partial struct ProductId { }` with a `New()` function similar to `Guid.NewGuid()`
 
 The generator targets .NET Standard 2.0 and has been tested with `netcoreapp3.1` and `net5.0` target frameworks.
-The library is alpha quality.
 
-Note that record type feature for structs is planned for C# 10, in which cases some of the
-use cases this library supports will be easier to achieve without this libray.
+Note that record type feature for structs is planned for C# 10, at which point this library might be obsolete.
 
 ## Installation
 
 Add to your project file:
 
 ```xml
-<PackageReference Include="WrapperValueObject.Generator" Version="0.0.1-alpha08">
+<PackageReference Include="WrapperValueObject.Generator" Version="0.0.1">
   <PrivateAssets>all</PrivateAssets>
   <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 </PackageReference>
@@ -32,7 +30,7 @@ Add to your project file:
 Or install via CLI
 
 ```sh
-dotnet add package WrapperValueObject.Generator --version 0.0.1-alpha08
+dotnet add package WrapperValueObject.Generator --version 0.0.1
 ```
 
 This package is a build time dependency only.
