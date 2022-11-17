@@ -3,6 +3,10 @@
 ![Build](https://github.com/martinothamar/WrapperValueObject/workflows/Build/badge.svg)
 [![NuGet](https://img.shields.io/nuget/v/WrapperValueObject.Generator.svg)](https://www.nuget.org/packages/WrapperValueObject.Generator/)
 
+> **Note**
+
+> This library is not actively maintained at the moment, I recommend looking at [SteveDunn/Vogen](https://github.com/SteveDunn/Vogen)
+
 A .NET source generator for creating
 * Simple value objects wrapping other type(s), without the hassle of manual `Equals`/`GetHashCode`
 * Value objects wrapping math primitives and other types
